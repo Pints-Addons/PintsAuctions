@@ -1,0 +1,21 @@
+## Interface: 11508, 11509, 16001
+## Title: Pint's Auctions
+## Notes: Auction house prices, shopping lists, selling, undercut cancelling and crafting costs. Its full scans also price Pint's Professions (levelling guides and Flip). Replaces Auctionator; answers its price API for other add-ons. /pah
+## Author: Jake (Pint's Add-ons, built with Claude)
+## Version: 1.2.13
+## X-Curse-Project-ID: 1821554
+## SavedVariables: PintsAuctionsDB
+## SavedVariablesPerCharacter: PintsAuctionsCharDB
+## OptionalDeps: LibStub, LibDataBroker-1.1, LibDBIcon-1.0, PintsAlts
+
+Core.lua
+UI.lua
+Sell.lua
+Cancel.lua
+Deals.lua
+Options.lua
+Crafting.lua
+Lists.lua
+Waylaid.lua
+Writs.lua
+Modern.lua

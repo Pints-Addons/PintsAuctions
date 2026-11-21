@@ -1,0 +1,9 @@
+Pint's Auctions - Changelog
+
+v1.2.13
+- First CurseForge release. Auction house prices from full scans (in every tooltip), shopping lists, selling,
+  undercut cancelling and crafting costs; answers Auctionator's price API.
+- Crates and Writs: turn-in NPC and zone for each writ, a Turn-ins view (foldable, nearest first), a Route view (best
+  order, with the mailbox items for each stop), map pins, writ tooltips, a pop-out route tracker (/pah route), and the
+  Durotar Supply and Logistics window.
+- Full scans price Pint's Professions' levelling guides and Flip.
