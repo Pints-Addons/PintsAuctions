@@ -1,6 +1,13 @@
 -- Pint's Auctions - tabs inside the auction house window: Shopping, Selling, Cancelling, Pint's.
 local ADDON, NS = ...
 local PA = NS.PA
+function PA.ShowItemBeside(id)          -- the item's own tooltip, next to GameTooltip
+	local t = PA.itemTip or CreateFrame("GameTooltip", "PintsAuctionsItemTip", UIParent, "GameTooltipTemplate")
+	PA.itemTip = t
+	t:SetOwner(GameTooltip, "ANCHOR_NONE"); t:ClearAllPoints()
+	t:SetPoint("TOPLEFT", GameTooltip, "TOPRIGHT", 2, 0)
+	t:SetHyperlink("item:" .. id); t:Show()
+end
 local Print, Money = PA.Print, PA.Money
 
 local HW, HH = 790, 420            -- the area we draw in, over the auction window's own pages
@@ -113,9 +120,12 @@ local function List(parent, w, rows, rowH, cols, onClick, noIcon)
 		r:SetScript("OnEnter", function(self)
 			local it = self.item
 			if it and it.link then GameTooltip:SetOwner(self, "ANCHOR_RIGHT"); GameTooltip:SetHyperlink(it.link); GameTooltip:Show()
-			elseif it and it.tip then GameTooltip:SetOwner(self, "ANCHOR_RIGHT"); GameTooltip:AddLine(it.tip, 1, 1, 1, true); GameTooltip:Show() end
+			elseif it and it.tip then
+				GameTooltip:SetOwner(self, "ANCHOR_RIGHT"); GameTooltip:AddLine(it.tip, 1, 1, 1, true); GameTooltip:Show()
+				if it.tipItem then PA.ShowItemBeside(it.tipItem) end
+			end
 		end)
-		r:SetScript("OnLeave", function() GameTooltip:Hide() end)
+		r:SetScript("OnLeave", function() GameTooltip:Hide(); if PA.itemTip then PA.itemTip:Hide() end end)
 		f.rows[i] = r
 	end
 	f.more = f:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall"); f.more:SetPoint("TOPRIGHT", f, "BOTTOMRIGHT", -2, -2)

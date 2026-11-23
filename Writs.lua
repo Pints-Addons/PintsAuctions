@@ -511,6 +511,34 @@ end
 PA.WritDoneToday = DoneToday
 
 local page, list, status, filter = nil, nil, nil, "sale"
+local MADE = { -- writ item -> { skill line, skill to learn it } (Pint's Professions data)
+	[2317]={165,75}, [2865]={164,80}, [3383]={171,90}, [3385]={171,120}, [3387]={171,250}, [3388]={171,125}, [3390]={171,140}, [3391]={171,150}, [3484]={164,145}, [3485]={164,150}, [3491]={164,105}, [3823]={171,165}, [3824]={171,165}, [3827]={171,160}, [3837]={164,190}, [3848]={164,80}, [3853]={164,180}, [4245]={197,125}, [4252]={165,115}, [4254]={165,125}, [4313]={197,75}, [4317]={197,100}, [4321]={197,115}, [4329]={197,165}, [4373]={202,120}, [4380]={202,140}, [4381]={202,140}, [4383]={202,145}, [4384]={202,150}, [4392]={202,185}, [4393]={202,185}, [4395]={202,195}, [4396]={202,200}, [4623]={171,215}, [4852]={202,185}, [5507]={202,135}, [5540]={164,85}, [5541]={164,140}, [5633]={171,175}, [5634]={171,150}, [5766]={197,110}, [5958]={165,80}, [5965]={165,160}, [5996]={171,90}, [6041]={164,190}, [6048]={171,135}, [6049]={171,165}, [6050]={171,190}, [6052]={171,190}, [6263]={197,75}, [6264]={197,90}, [6712]={202,100}, [7048]={197,120}, [7061]={197,160}, [7063]={197,170}, [7284]={165,95}, [7349]={165,110}, [7358]={165,115}, [7371]={165,125}, [7378]={165,160}, [7391]={165,175}, [7506]={202,125}, [7922]={164,190}, [7928]={164,225}, [7929]={164,230}, [7941]={164,185}, [7942]={164,220}, [7943]={164,225}, [7947]={164,255}, [7964]={164,175}, [7969]={164,235}, [8069]={202,125}, [8174]={165,175}, [8189]={165,185}, [8192]={165,185}, [8200]={165,190}, [8201]={165,195}, [8210]={165,195}, [8214]={165,200}, [8217]={165,200}, [8218]={165,200}, [8949]={171,185}, [8951]={171,195}, [9060]={164,200}, [9061]={171,210}, [9088]={171,240}, [9144]={171,225}, [9224]={171,250}, [9233]={171,250}, [9366]={164,205}, [9998]={197,170}, [10004]={197,180}, [10008]={197,180}, [10009]={197,180}, [10023]={197,190}, [10025]={197,245}, [10036]={197,140}, [10042]={197,190}, [10048]={197,70}, [10050]={197,190}, [10052]={197,185}, [10498]={202,175}, [10500]={202,205}, [10501]={202,220}, [10504]={202,245}, [10514]={202,215}, [10548]={202,240}, [10560]={202,200}, [10592]={171,200}, [11128]={164,125}, [11144]={164,175}, [11590]={202,200}, [12190]={171,230}, [12416]={164,260}, [12417]={164,295}, [12422]={164,300}, [12775]={164,280}, [13457]={171,290}, [13513]={171,300}, [13864]={197,235}, [14046]={197,215}, [14108]={197,240}, [14130]={197,260}, [14141]={197,225}, [15053]={165,260}, [15071]={165,250}, [15075]={165,265}, [15080]={165,270}, [15084]={165,240}, [15087]={165,265}, [15092]={165,250}, [15094]={165,265}, [15869]={164,75}, [15872]={164,250}, [15996]={202,265}, [16005]={202,285}, [16023]={202,275}, [18232]={202,300}, [18253]={171,300}, [18258]={165,285}, [18587]={202,265}, [18631]={202,260}, [18645]={202,265}, [18662]={165,150}, [20549]={164,300}, [21277]={202,320}, [21340]={197,215}, [22246]={197,190}, [22251]={197,230}, [246948]={171,250} }
+local SKILL_NAMES = { [171] = "Alchemy", [164] = "Blacksmithing", [333] = "Enchanting", [202] = "Engineering", [165] = "Leatherworking",
+	[197] = "Tailoring", [185] = "Cooking", [129] = "First Aid", [186] = "Mining" }
+local function MySkill(line)            -- this character's rank in a profession, or nil
+	local want = SKILL_NAMES[line]
+	if GetProfessions and GetProfessionInfo then
+		for _, ix in ipairs({ GetProfessions() }) do
+			if ix then
+				local name, _, rank, _, _, _, sl = GetProfessionInfo(ix)
+				if sl == line or name == want then return rank end
+			end
+		end
+	end
+	if GetNumSkillLines then
+		for i = 1, GetNumSkillLines() do
+			local name, header, _, rank = GetSkillLineInfo(i)
+			if not header and (name == want or (line == 186 and name == "Mining")) then return rank end
+		end
+	end
+end
+local function MadeLine(item)           -- "Made with Alchemy 150 (you: 163)", coloured for whether you can make it
+	local m = MADE[item]
+	if not m then return "" end
+	local mine = MySkill(m[1])
+	local col = not mine and "|cff999999" or (mine >= m[2] and "|cff40ff40" or "|cffff6060")
+	return "\nMade with " .. (SKILL_NAMES[m[1]] or "?") .. " " .. m[2] .. "  " .. col .. (mine and ("(you: " .. mine .. ")") or "(you don't have it)") .. "|r"
+end
 local function Rows(flt)
 	local filter = flt or filter
 	local data, n = {}, 0
@@ -540,9 +568,9 @@ local function Rows(flt)
 				total and PA.Money(total, true) or "|cff888888?|r",
 				rep > 0 and tostring(rep) or "",
 				per and PA.Money(per, true) or "|cff888888?|r",
-				texture = select(10, GII(w[4])) or select(10, GII(w[2])) or 134939, key = tostring(w[1]), writ = w, dim = done,
+				texture = select(10, GII(w[4])) or select(10, GII(w[2])) or 134939, key = tostring(w[1]), writ = w, dim = done, tipItem = w[4],
 				sk = { w[3], Where(w, true) or "~", wp or math.huge, itemCost or math.huge, total or math.huge, rep, per or math.huge },
-				tip = "Craftsman's Writ: " .. w[3] .. "\nAsks for " .. w[5] .. " " .. w[6] .. (have > 0 and (" (you have " .. have .. ")") or "")
+				tip = "Craftsman's Writ: " .. w[3] .. "\nAsks for " .. w[5] .. " " .. w[6] .. (have > 0 and (" (you have " .. have .. ")") or "") .. MadeLine(w[4])
 					.. (Where(w) and ("\nTurn in: " .. Where(w)) or "")
 					.. "\n\nWrit: " .. (ownWrit and "you have one" or (wp and (PA.Money(wp) .. (oldW and "  (an old price - Scan writs)" or "")) or "none listed at the last scan"))
 					.. "\n" .. w[6] .. ": " .. (ip and (PA.Money(ip) .. " each" .. (old and "  (an old price - Scan writs)" or "")) or (ipNone and "none listed at the last scan") or "no price yet") .. (need > 0 and ("  - " .. need .. " to buy") or "  - you have them")
@@ -988,7 +1016,7 @@ function PA.DrawWritsPane()
 	local data = Rows(pFilter)
 	local rows = {}
 	for _, r in ipairs(data) do
-		rows[#rows + 1] = { r[1], r[2], r[5], r[7], texture = r.texture, key = r.key, writ = r.writ, tip = r.tip, dim = r.dim, sk = { r.sk[1], r.sk[2], r.sk[5], r.sk[7] } }
+		rows[#rows + 1] = { r[1], r[2], r[5], r[7], texture = r.texture, key = r.key, writ = r.writ, tip = r.tip, tipItem = r.tipItem, dim = r.dim, sk = { r.sk[1], r.sk[2], r.sk[5], r.sk[7] } }
 	end
 	pList:Set(rows, true)
 	-- how many are done today (hidden in "Not done today", greyed everywhere else)

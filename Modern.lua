@@ -578,8 +578,25 @@ local function Build()
 	panel:SetWidth(W)
 	panel:SetBackdrop({ bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background-Dark", edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border", tile = true, tileSize = 16, edgeSize = 14, insets = { left = 3, right = 3, top = 3, bottom = 3 } })
 	panel:SetBackdropColor(0, 0, 0, 0.92)
+	-- a toggle on Blizzard's auction house title bar, next to its close button (remembered between visits)
+	do
+		local ah = AuctionHouseFrame
+		local tb = PA.Btn(ah, "Pint's", 56, 20)
+		local cb = ah.CloseButton or _G.AuctionHouseFrameCloseButton
+		if cb then tb:SetPoint("RIGHT", cb, "LEFT", -2, 0) else tb:SetPoint("TOPRIGHT", ah, "TOPRIGHT", -30, -2) end
+		tb:SetFrameStrata("HIGH"); tb:SetFrameLevel(((cb and cb:GetFrameLevel()) or ah:GetFrameLevel()) + 20); tb:Show()
+		local function Apply() if PA.db and PA.db.sideHidden then panel:Hide() else panel:Show() end end
+		tb:SetScript("OnClick", function() if PA.db then PA.db.sideHidden = not PA.db.sideHidden end; Apply() end)
+		tb:SetScript("OnEnter", function(self) GameTooltip:SetOwner(self, "ANCHOR_BOTTOM"); GameTooltip:AddLine("Show or hide Pint's Auctions"); GameTooltip:Show() end)
+		tb:SetScript("OnLeave", function() GameTooltip:Hide() end)
+		ah:HookScript("OnShow", Apply)
+		C_Timer.After(0, Apply)
+	end
 	local title = PA.Label(panel, "|cffd4a017Pint's|r Auctions", "GameFontNormal"); title:SetPoint("TOPLEFT", 10, -9)
-	local opt = PA.Btn(panel, "Options", 64, 18); opt:SetPoint("TOPRIGHT", -8, -6)
+	-- a close button on the panel itself (the Pint's button on the auction house title bar opens it again)
+	local x = CreateFrame("Button", nil, panel, "UIPanelCloseButton"); x:SetSize(24, 24); x:SetPoint("TOPRIGHT", -2, -2)
+	x:SetScript("OnClick", function() if PA.db then PA.db.sideHidden = true end; panel:Hide() end)
+	local opt = PA.Btn(panel, "Options", 64, 18); opt:SetPoint("TOPRIGHT", -28, -6)
 	opt:SetScript("OnClick", function() if PA.OpenOptions then PA.OpenOptions() end end)
 	local x = 8
 	for _, t in ipairs({ { "shop", "Shopping" }, { "undercut", "Undercut" }, { "deals", "Deals" }, { "crates", "Crates" }, { "writs", "Writs" } }) do
