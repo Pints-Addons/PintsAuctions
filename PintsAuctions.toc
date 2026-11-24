@@ -2,7 +2,7 @@
 ## Title: Pint's Auctions
 ## Notes: Auction house prices, shopping lists, selling, undercut cancelling and crafting costs. Its full scans also price Pint's Professions (levelling guides and Flip). Replaces Auctionator; answers its price API for other add-ons. /pah
 ## Author: Jake (Pint's Add-ons, built with Claude)
-## Version: 1.2.14
+## Version: 1.2.15
 ## X-Curse-Project-ID: 1821554
 ## SavedVariables: PintsAuctionsDB
 ## SavedVariablesPerCharacter: PintsAuctionsCharDB

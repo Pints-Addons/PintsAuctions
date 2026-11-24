@@ -9,7 +9,7 @@ local C = C_AuctionHouse
 local Print, Money = PA.Print, PA.Money
 local function S() return PA.S end
 local GetItemInfo = (C_Item and C_Item.GetItemInfo) or GetItemInfo
-local function RF() return (GetRealmName() or "?") .. " " .. (UnitFactionGroup("player") or "") end
+local function RF() return PA.RF() end
 local PRICE_SORT = { { sortOrder = Enum.AuctionHouseSortOrder.Price, reverseSort = false } }
 local W = 420
 

@@ -68,7 +68,68 @@ function PA.ParseMoney(t)
 end
 
 ---------------------------------------------------------------- price database
-local function RF() return (GetRealmName() or "?") .. " " .. (UnitFactionGroup("player") or "") end
+-- prices are kept per realm and faction, shared by every character there. WoW Forever can report the realm as blank
+-- for a moment at login, which filed scans under " Horde" apart from the realm's own (each character then saw a
+-- different scan): the last realm seen stands in until the game names it, and the blank-realm data is merged back.
+local function OkRealm(r) return type(r) == "string" and r ~= "" and r ~= "?" and not (type(issecretvalue) == "function" and issecretvalue(r)) end
+local function KnownRealm()
+	local r = GetRealmName and GetRealmName()
+	if OkRealm(r) then return r end
+	r = PintsLedgerDB and PintsLedgerDB.lastRealm         -- (Pint's Alts' last realm: Forever can hide it all session)
+	if OkRealm(r) then return r end
+end
+local function Realm()
+	local r = KnownRealm()
+	if r then
+		if PintsAuctionsDB then PintsAuctionsDB.lastRealm = r end
+		return r
+	end
+	return (PintsAuctionsDB and PintsAuctionsDB.lastRealm) or "?"
+end
+local function RF() return Realm() .. " " .. (UnitFactionGroup("player") or "") end
+PA.RF = RF
+local function MergeBlankRealm()
+	local r = KnownRealm() or (db and db.lastRealm)
+	local fac = UnitFactionGroup("player")
+	if not (db and OkRealm(r) and fac) then return false end
+	local good, blank = r .. " " .. fac, " " .. fac
+	-- prices: per item the newer look wins, and the daily lows of both are kept
+	local bp, gp = db.prices and db.prices[blank], db.prices and db.prices[good]
+	if bp then
+		if not gp then db.prices[good] = bp
+		else
+			for key, e in pairs(bp) do
+				local g = gp[key]
+				if not g then gp[key] = e
+				else
+					local h = {}
+					for d, v in pairs(g.h or {}) do h[d] = v end
+					for d, v in pairs(e.h or {}) do h[d] = h[d] and math.min(h[d], v) or v end
+					if (e.t or 0) > (g.t or 0) then gp[key] = e; e.h = h else g.h = h end
+				end
+			end
+		end
+		db.prices[blank] = nil
+	end
+	-- this week's full scans (for deals): both lists, oldest first
+	local bs, gs = db.scans and db.scans[blank], db.scans and db.scans[good]
+	if bs then
+		if not gs then db.scans[good] = bs
+		else
+			for key, list in pairs(bs) do
+				if type(list) ~= "table" or type(gs[key]) ~= "table" then gs[key] = gs[key] or list
+				else for _, x in ipairs(list) do table.insert(gs[key], x) end end
+			end
+		end
+		db.scans[blank] = nil
+	end
+	if db.lastAll and db.lastAll[blank] then db.lastAll[good] = math.max(db.lastAll[good] or 0, db.lastAll[blank]); db.lastAll[blank] = nil end
+	if db.deals and db.deals[blank] then
+		if not db.deals[good] or (db.deals[blank].t or 0) > (db.deals[good].t or 0) then db.deals[good] = db.deals[blank] end
+		db.deals[blank] = nil
+	end
+	return true
+end
 local function Today() return math.floor(time() / 86400) end
 -- "id" or "id:suffix" for random-suffix items ("of the Bear")
 function PA.Key(linkOrID)
@@ -449,6 +510,7 @@ ev:SetScript("OnEvent", function(_, e, a1)
 		PA.UseProfile()
 		PA.AddStarterLists()
 	elseif e == "PLAYER_LOGIN" then
+		do local n = 0; local function Try() n = n + 1; if not MergeBlankRealm() and n < 30 then C_Timer.After(2, Try) end end; C_Timer.After(1, Try) end
 		HookTooltips()
 		CompatAPI()
 		if PA.BuildMinimap then PA.BuildMinimap() end

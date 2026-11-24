@@ -1,5 +1,10 @@
 Pint's Auctions - Changelog
 
+v1.2.15
+- WoW Forever: every character on a realm and faction shares one set of scans again. A realm the game hadn't named
+  yet at login filed scans apart (" Horde"), so characters saw different prices; the last realm seen stands in now,
+  and the split data is merged back (newer price per item wins, daily lows of both kept).
+
 v1.2.14
 - Writ tooltips show the profession and skill that makes the requested item (green if you can make it, red if
   your skill is too low, grey if you don't have the profession), and the item's own tooltip appears beside it.
